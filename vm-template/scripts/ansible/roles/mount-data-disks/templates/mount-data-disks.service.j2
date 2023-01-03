@@ -1,0 +1,9 @@
+[Unit]
+Description=Mount data disks
+
+[Service]
+Type=oneshot
+ExecStart={{mdd_mount_path}}
+
+[Install]
+WantedBy=multi-user.target

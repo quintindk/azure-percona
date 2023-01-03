@@ -188,6 +188,7 @@ if ($UploadArtifacts -Or $useAbsolutePathStaging -or $ArtifactsLocationSasTokenP
   if ($null -eq $StorageAccount) {
     Write-Host "Creating a $StorageAccountName storage account..."
     $StorageAccount = New-AzStorageAccount -StorageAccountName $StorageAccountName -Type 'Standard_LRS' -ResourceGroupName "$ResourceGroupName" -Location "$Location"
+    $OptionalParameters["storageAccountName"] = $StorageAccountName
   }
 
   if ($StorageContainerName.length -gt 63) {

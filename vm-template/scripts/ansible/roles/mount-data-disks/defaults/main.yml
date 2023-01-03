@@ -1,0 +1,13 @@
+---
+# defaults file for mount-data-disks
+
+# File keeping track of mounted disks
+mdd_file: /var/run/data-mountpoints
+
+# Minimum disk size in bytes (default: 100GB)
+mdd_min_disk_size: 100122547200
+
+mdd_mount_path: /usr/local/bin/mount-data-disks
+mdd_umount_path: /usr/local/bin/umount-data-disks
+mdd_service_path: /etc/systemd/system/mount-data-disks.service
+

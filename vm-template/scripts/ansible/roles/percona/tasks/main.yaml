@@ -1,0 +1,39 @@
+- name: Write config
+  become: true
+  become_user: root
+  copy:
+    dest: /etc/mysql/my.cnf.d/mysql.cnf
+    content: |
+      #
+      # The Percona Server configuration file.
+      #
+      # One can use all long options that the program supports.
+      # Run program with --help to get a list of available options and with
+      # --print-defaults to see which it would actually understand and use.
+      #
+      # For explanations see
+      # http://dev.mysql.com/doc/mysql/en/server-system-variables.html
+
+      [mysqld]
+      datadir                     = {{ data_folder }}
+      log-bin                     = {{ logs_folder }}/mysql-logs.index
+      server_id                   = {{server_id}}
+      replicate-wild-ignore-table = mysql%.heartbeat%
+      query_cache_size            = 10485760
+      innodb_buffer_pool_size     = {{ (ansible_memtotal_mb * 0.8)*10240000 }}
+      max_connections             = 65535
+      gtid_mode                   = {{ gtid_mode }}
+      enforce_gtid_consistency    = {{ gtid_mode }}
+      default-time-zone           = {{ db_time_zone }}
+
+- name: Create a Percona container
+  community.docker.docker_container:
+    name: percona
+    image: percona:{{ percona_version }}
+    volumes:
+      - "/etc/mysql/my.cnf.d:/etc/my.cnf.d"
+      - "/mysql-data:/var/lib/mysql"
+      - "/mysql-logs:/var/lib/mysql-logs"
+    ports:
+      - "3306:3306"
+    restart_policy: "always"

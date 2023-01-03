@@ -159,6 +159,41 @@
         "description": "Name of the resource group for the public ip address"
       }
     },
+    "dataDiskSize": {
+      "type": "string",
+      "defaultValue": "100GB",
+      "metadata": {
+        "description": "The size of the data disk to attach to the VM"
+      }
+    },
+    "dataDiskTier": {
+      "type": "string",
+      "defaultValue": "P60",
+      "metadata": {
+        "description": "The tier of the data disk to attach to the VM"
+      }
+    },
+    "logsDiskSize": {
+      "type": "string",
+      "defaultValue": "100GB",
+      "metadata": {
+        "description": "The size of the data disk to attach to the VM"
+      }
+    },
+    "logsDiskTier": {
+      "type": "string",
+      "defaultValue": "P60",
+      "metadata": {
+        "description": "The tier of the data disk to attach to the VM"
+      }
+    },
+    "availabilityZone": {
+      "type": "int",
+      "defaultValue": 1,
+      "metadata": {
+        "description": "The availability zone to pin this VM and disks to"
+      }
+    },
     "publicIpAllocationMethod": {
       "type": "string",
       "defaultValue": "Dynamic",
@@ -188,7 +223,7 @@
       "metadata": {
         "description": "The base URI where artifacts required by this template are located. When the template is deployed using the accompanying scripts, a private location in the subscription will be used and this value will be automatically generated."
       },
-      "defaultValue": "[deployment().properties.templateLink.uri]" 
+      "defaultValue": "[deployment().properties.templateLink.uri]"
     },
     "_artifactsLocationSasToken": {
       "type": "securestring",
@@ -253,7 +288,7 @@
       "location": "[parameters('location')]",
       "sku": {
         "name": "[parameters('publicIpSku')]"
-      },    
+      },
       "properties": {
         "publicIPAllocationMethod": "[parameters('publicIpAllocationMethod')]",
         "dnsSettings": {
@@ -300,6 +335,19 @@
               "sourcePortRange": "*",
               "destinationAddressPrefix": "*"
             }
+          },
+          {
+            "name": "default-allow-https",
+            "properties": {
+              "priority": 1001,
+              "sourceAddressPrefix": "*",
+              "protocol": "Tcp",
+              "destinationPortRange": "443",
+              "access": "Allow",
+              "direction": "Inbound",
+              "sourcePortRange": "*",
+              "destinationAddressPrefix": "*"
+            }
           }
         ]
       }
@@ -333,6 +381,50 @@
       }
     },
     {
+      "type": "Microsoft.Compute/disks",
+      "apiVersion": "2022-03-02",
+      "name": "[concat(parameters('vmName'), '-data')]",
+      "location": "[resourceGroup().location]",
+      "sku": {
+        "name": "StandardSSD_LRS"
+      },
+      "properties": {
+        "burstingEnabled": true,
+        "creationData": {
+          "caching": "ReadWrite",
+          "createOption": "Empty"
+        },
+        "diskSizeGB": "[parameters('dataDiskSize')]",
+        "optimizedForFrequentAttach": false,
+        "osType": "Linux",
+        "publicNetworkAccess": "Disabled",
+        "tier": "[parameters('dataDiskTier')]"
+      },
+      "zones": [ "[parameters('availabilityZone')]" ]
+    },
+    {
+      "type": "Microsoft.Compute/disks",
+      "apiVersion": "2022-03-02",
+      "name": "[concat(parameters('vmName'), '-logs')]",
+      "location": "[resourceGroup().location]",
+      "sku": {
+        "name": "StandardSSD_LRS"
+      },
+      "properties": {
+        "burstingEnabled": true,
+        "creationData": {
+          "caching": "ReadWrite",
+          "createOption": "Empty"
+        },
+        "diskSizeGB": "[parameters('logsDiskSize')]",
+        "optimizedForFrequentAttach": false,
+        "osType": "Linux",
+        "publicNetworkAccess": "Disabled",
+        "tier": "[parameters('logsDiskTier')]"
+      },
+      "zones": [ "[parameters('availabilityZone')]" ]
+    },
+    {
       "apiVersion": "2020-06-01",
       "type": "Microsoft.Compute/virtualMachines",
       "name": "[parameters('vmName')]",
@@ -355,9 +447,21 @@
           "imageReference": {
             "publisher": "Canonical",
             "offer": "UbuntuServer",
-            "sku": "16.04-LTS",
+            "sku": "20.04-LTS",
             "version": "latest"
           },
+          "dataDisks": [
+            {
+              "lun": 1,
+              "id": "[resourceId('Microsoft.Compute/disks', concat(parameters('vmName'), '-data')) ]",
+              "createOption": "Attach"
+            },
+            {
+              "lun": 2,
+              "id": "[resourceId('Microsoft.Compute/disks', concat(parameters('vmName'), '-logs')) ]",
+              "createOption": "Attach"
+            }
+          ],
           "osDisk": {
             "caching": "ReadWrite",
             "createOption": "FromImage"

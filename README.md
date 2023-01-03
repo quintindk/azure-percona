@@ -7,7 +7,7 @@ This is the repository for my Azure Percona product. Essentially this is the cul
 
 ## ✅ Introduction
 
-Recently I was working on a MySQL implementation in Azure I was not happy with the [Azure MySQL Flexible Server] implementation from Azure itself and decided to go with MySQL VM instances instead. Of course, this was not the best decision and caused some crazy technical debt which we had to address such as automated backups, performance and management etc. So, I decided that the Percona set of tools for backups, management and monitoring would be a handy product in Azure Market place and I needed something to do.
+Recently I was working on a MySQL implementation in Azure I was not happy with the [Azure MySQL Flexible Server](https://learn.microsoft.com/en-us/azure/mysql/flexible-server/overview) implementation from Azure itself and decided to go with MySQL VM instances instead. Of course, this was not the best decision and caused some crazy technical debt which we had to address such as automated backups, performance and management etc. So, I decided that the Percona set of tools for backups, management and monitoring would be a handy product in Azure Market place and I needed something to do.
 
 ## ⚙️ Technologies
 

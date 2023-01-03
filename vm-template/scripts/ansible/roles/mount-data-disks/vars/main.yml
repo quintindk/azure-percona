@@ -1,0 +1,12 @@
+---
+# vars file for mount-data-disks
+
+# Mount point names to override default /data-n
+mdd_mount_names: 
+
+# Subdirectories to create on every mounted disk
+mdd_subdirectories: [ ]
+
+# Owner and group of the mounted disks
+mdd_final_user: root
+mdd_final_group: root

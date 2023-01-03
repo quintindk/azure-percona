@@ -1,0 +1,19 @@
+- name: Copy mount-data-disks script
+  template: src=templates/mount-data-disks.j2 dest={{mdd_mount_path}} mode=0775
+  notify:
+    - restart mount-data-disks
+
+- name: Copy umount-data-disks script
+  template: src=templates/umount-data-disks.j2 dest={{mdd_umount_path}} mode=0775
+
+- name: Copy mount-data-disks.service
+  template: src=templates/mount-data-disks.service.j2 dest={{mdd_service_path}}
+  notify:
+    - reload systemd
+    - restart mount-data-disks
+
+- meta: flush_handlers
+
+- name: Enable and start mount-data-disks.service
+  service: name=mount-data-disks state=started enabled=on
+

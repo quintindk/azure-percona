@@ -1,0 +1,16 @@
+
+- name: Create a pmm server container
+  community.docker.docker_container:
+    name: pmm-server
+    image: percona/pmm-server:{{ pmm_version }}
+    volumes:
+      - "/var/lib/pmm:/srv"
+    ports:
+      - "443:443"
+    restart_policy: "always"
+
+- name: Run a simple command (command)
+  community.docker.docker_container_exec:
+    container: pmm-server
+    command: change-admin-password {{ pmm_admin_password }}
+  register: result

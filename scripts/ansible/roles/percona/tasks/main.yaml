@@ -17,7 +17,7 @@
       [mysqld]
       datadir                     = {{ data_folder }}
       log-bin                     = {{ logs_folder }}/mysql-logs.index
-      server_id                   = {{server_id}}
+      server_id                   = {{ server_id }}
       replicate-wild-ignore-table = mysql%.heartbeat%
       query_cache_size            = 10485760
       innodb_buffer_pool_size     = {{ (ansible_memtotal_mb * 0.8)*10240000 }}

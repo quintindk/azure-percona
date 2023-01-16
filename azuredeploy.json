@@ -1,6 +1,13 @@
 {
   "$schema": "https://schema.management.azure.com/schemas/2019-04-01/deploymentTemplate.json#",
   "contentVersion": "1.0.0.0",
+  "metadata": {
+    "_generator": {
+      "name": "bicep",
+      "version": "0.13.1.58284",
+      "templateHash": "3618298760507374113"
+    }
+  },
   "parameters": {
     "location": {
       "type": "string",
@@ -34,14 +41,14 @@
       }
     },
     "adminPasswordOrKey": {
-      "type": "securestring",
+      "type": "secureString",
       "metadata": {
         "description": "Password or ssh key for the Virtual Machine."
       }
     },
     "vmSize": {
       "type": "string",
-      "defaultValue": "Standard_A2_v2",
+      "defaultValue": "Standard_B2ms",
       "metadata": {
         "description": "Size for the Virtual Machine."
       }
@@ -59,7 +66,7 @@
     },
     "storageAccountName": {
       "type": "string",
-      "defaultValue": "[concat('storage', uniqueString(resourceGroup().id))]",
+      "defaultValue": "[format('storage{0}', uniqueString(resourceGroup().id))]",
       "metadata": {
         "description": "Name of the storage account"
       }
@@ -147,7 +154,7 @@
     },
     "publicIpDns": {
       "type": "string",
-      "defaultValue": "[concat('linux-vm-', uniqueString(resourceGroup().id))]",
+      "defaultValue": "[format('linux-vm-{0}', uniqueString(resourceGroup().id))]",
       "metadata": {
         "description": "DNS of the public ip address for the VM"
       }
@@ -160,36 +167,50 @@
       }
     },
     "dataDiskSize": {
-      "type": "string",
-      "defaultValue": "100GB",
+      "type": "int",
+      "defaultValue": 513,
       "metadata": {
         "description": "The size of the data disk to attach to the VM"
       }
     },
     "dataDiskTier": {
       "type": "string",
-      "defaultValue": "P60",
+      "defaultValue": "P30",
       "metadata": {
         "description": "The tier of the data disk to attach to the VM"
       }
     },
-    "logsDiskSize": {
+    "dataDiskSku": {
       "type": "string",
-      "defaultValue": "100GB",
+      "defaultValue": "Premium_LRS",
+      "metadata": {
+        "description": "The sku of the data disk to attach to the VM"
+      }
+    },
+    "logDiskSku": {
+      "type": "string",
+      "defaultValue": "Premium_LRS",
+      "metadata": {
+        "description": "The sku of the log disk to attach to the VM"
+      }
+    },
+    "logsDiskSize": {
+      "type": "int",
+      "defaultValue": 513,
       "metadata": {
         "description": "The size of the data disk to attach to the VM"
       }
     },
     "logsDiskTier": {
       "type": "string",
-      "defaultValue": "P60",
+      "defaultValue": "P30",
       "metadata": {
         "description": "The tier of the data disk to attach to the VM"
       }
     },
     "availabilityZone": {
-      "type": "int",
-      "defaultValue": 1,
+      "type": "string",
+      "defaultValue": "1",
       "metadata": {
         "description": "The availability zone to pin this VM and disks to"
       }
@@ -220,27 +241,27 @@
     },
     "_artifactsLocation": {
       "type": "string",
+      "defaultValue": "[deployment().properties.templateLink.uri]",
       "metadata": {
         "description": "The base URI where artifacts required by this template are located. When the template is deployed using the accompanying scripts, a private location in the subscription will be used and this value will be automatically generated."
-      },
-      "defaultValue": "[deployment().properties.templateLink.uri]"
+      }
     },
     "_artifactsLocationSasToken": {
-      "type": "securestring",
+      "type": "secureString",
+      "defaultValue": "",
       "metadata": {
         "description": "The sasToken required to access _artifactsLocation.  When the template is deployed using the accompanying scripts, a sasToken will be automatically generated."
-      },
-      "defaultValue": ""
+      }
     }
   },
   "variables": {
-    "nicName": "[concat(parameters('vmName'), '-nic')]",
+    "nicName": "[format('{0}-nic', parameters('vmName'))]",
     "linuxConfiguration": {
       "disablePasswordAuthentication": true,
       "ssh": {
         "publicKeys": [
           {
-            "path": "[concat('/home/', parameters('adminUsername'), '/.ssh/authorized_keys')]",
+            "path": "[format('/home/{0}/.ssh/authorized_keys', parameters('adminUsername'))]",
             "keyData": "[parameters('adminPasswordOrKey')]"
           }
         ]
@@ -253,22 +274,9 @@
     "fileToBeCopied": "install.sh",
     "scriptFolder": "scripts",
     "scriptFileName": "copy.sh",
-    "scriptArgs": "[concat('-a ', uri(parameters('_artifactsLocation'), '.'), ' -t \"', parameters('_artifactsLocationSasToken'), '\" -p ', variables('scriptFolder'), ' -f ', variables('fileToBeCopied'))]"
+    "scriptArgs": "[format('-a {0} -t \"{1}\" -p {2} -f {3}', uri(parameters('_artifactsLocation'), '.'), parameters('_artifactsLocationSasToken'), variables('scriptFolder'), variables('fileToBeCopied'))]"
   },
   "resources": [
-    {
-      "apiVersion": "2020-06-01",
-      "name": "pid-00000000-0000-0000-0000-000000000000",
-      "type": "Microsoft.Resources/deployments",
-      "properties": {
-        "mode": "Incremental",
-        "template": {
-          "$schema": "https://schema.management.azure.com/schemas/2019-04-01/deploymentTemplate.json#",
-          "contentVersion": "1.0.0.0",
-          "resources": []
-        }
-      }
-    },
     {
       "condition": "[equals(parameters('storageNewOrExisting'), 'new')]",
       "type": "Microsoft.Storage/storageAccounts",
@@ -317,9 +325,9 @@
       }
     },
     {
-      "name": "[variables('networkSecurityGroupName')]",
       "type": "Microsoft.Network/networkSecurityGroups",
       "apiVersion": "2020-05-01",
+      "name": "[variables('networkSecurityGroupName')]",
       "location": "[parameters('location')]",
       "properties": {
         "securityRules": [
@@ -353,15 +361,10 @@
       }
     },
     {
-      "apiVersion": "2020-05-01",
       "type": "Microsoft.Network/networkInterfaces",
+      "apiVersion": "2020-05-01",
       "name": "[variables('nicName')]",
       "location": "[parameters('location')]",
-      "dependsOn": [
-        "[parameters('publicIpName')]",
-        "[parameters('virtualNetworkName')]",
-        "[variables('networkSecurityGroupName')]"
-      ],
       "properties": {
         "ipConfigurations": [
           {
@@ -371,68 +374,69 @@
               "subnet": {
                 "id": "[resourceId(parameters('virtualNetworkResourceGroupName'), 'Microsoft.Network/virtualNetworks/subnets/', parameters('virtualNetworkName'), parameters('subnetName'))]"
               },
-              "publicIPAddress": "[if(not(equals(parameters('publicIpNewOrExisting'), 'none')), variables('publicIpAddressId') , json('null'))]"
+              "publicIPAddress": "[if(not(equals(parameters('publicIpNewOrExisting'), 'none')), variables('publicIpAddressId'), json('null'))]"
             }
           }
         ],
         "networkSecurityGroup": {
           "id": "[resourceId('Microsoft.Network/networkSecurityGroups', variables('networkSecurityGroupName'))]"
         }
-      }
+      },
+      "dependsOn": [
+        "[resourceId('Microsoft.Network/networkSecurityGroups', variables('networkSecurityGroupName'))]",
+        "[resourceId('Microsoft.Network/publicIPAddresses', parameters('publicIpName'))]",
+        "[resourceId('Microsoft.Network/virtualNetworks', parameters('virtualNetworkName'))]"
+      ]
     },
     {
       "type": "Microsoft.Compute/disks",
       "apiVersion": "2022-03-02",
-      "name": "[concat(parameters('vmName'), '-data')]",
-      "location": "[resourceGroup().location]",
+      "name": "[format('{0}-data', parameters('vmName'))]",
+      "location": "[parameters('location')]",
       "sku": {
-        "name": "StandardSSD_LRS"
+        "name": "[parameters('dataDiskSku')]"
       },
       "properties": {
         "burstingEnabled": true,
         "creationData": {
-          "caching": "ReadWrite",
           "createOption": "Empty"
         },
         "diskSizeGB": "[parameters('dataDiskSize')]",
-        "optimizedForFrequentAttach": false,
         "osType": "Linux",
         "publicNetworkAccess": "Disabled",
         "tier": "[parameters('dataDiskTier')]"
       },
-      "zones": [ "[parameters('availabilityZone')]" ]
+      "zones": [
+        "[parameters('availabilityZone')]"
+      ]
     },
     {
       "type": "Microsoft.Compute/disks",
       "apiVersion": "2022-03-02",
-      "name": "[concat(parameters('vmName'), '-logs')]",
-      "location": "[resourceGroup().location]",
+      "name": "[format('{0}-logs', parameters('vmName'))]",
+      "location": "[parameters('location')]",
       "sku": {
-        "name": "StandardSSD_LRS"
+        "name": "[parameters('logDiskSku')]"
       },
       "properties": {
         "burstingEnabled": true,
         "creationData": {
-          "caching": "ReadWrite",
           "createOption": "Empty"
         },
         "diskSizeGB": "[parameters('logsDiskSize')]",
-        "optimizedForFrequentAttach": false,
         "osType": "Linux",
         "publicNetworkAccess": "Disabled",
         "tier": "[parameters('logsDiskTier')]"
       },
-      "zones": [ "[parameters('availabilityZone')]" ]
+      "zones": [
+        "[parameters('availabilityZone')]"
+      ]
     },
     {
-      "apiVersion": "2020-06-01",
       "type": "Microsoft.Compute/virtualMachines",
+      "apiVersion": "2020-06-01",
       "name": "[parameters('vmName')]",
       "location": "[parameters('location')]",
-      "dependsOn": [
-        "[parameters('storageAccountName')]",
-        "[variables('nicName')]"
-      ],
       "properties": {
         "hardwareProfile": {
           "vmSize": "[parameters('vmSize')]"
@@ -447,18 +451,24 @@
           "imageReference": {
             "publisher": "Canonical",
             "offer": "UbuntuServer",
-            "sku": "20.04-LTS",
+            "sku": "18_04-lts-gen2",
             "version": "latest"
           },
           "dataDisks": [
             {
               "lun": 1,
-              "id": "[resourceId('Microsoft.Compute/disks', concat(parameters('vmName'), '-data')) ]",
+              "caching": "ReadWrite",
+              "managedDisk": {
+                "id": "[resourceId('Microsoft.Compute/disks', format('{0}-data', parameters('vmName')))]"
+              },
               "createOption": "Attach"
             },
             {
               "lun": 2,
-              "id": "[resourceId('Microsoft.Compute/disks', concat(parameters('vmName'), '-logs')) ]",
+              "caching": "ReadWrite",
+              "managedDisk": {
+                "id": "[resourceId('Microsoft.Compute/disks', format('{0}-logs', parameters('vmName')))]"
+              },
               "createOption": "Attach"
             }
           ],
@@ -481,37 +491,41 @@
           }
         }
       },
-      "resources": [
-        {
-          "type": "extensions",
-          "name": "configScript",
-          "apiVersion": "2020-06-01",
-          "location": "[parameters('location')]",
-          "dependsOn": [
-            "[parameters('vmName')]"
-          ],
-          "properties": {
-            "publisher": "Microsoft.Azure.Extensions",
-            "type": "CustomScript",
-            "typeHandlerVersion": "2.0",
-            "autoUpgradeMinorVersion": true,
-            "settings": {
-              "fileUris": [
-                "[uri(parameters('_artifactsLocation'), concat('scripts/', variables('scriptFileName'), parameters('_artifactsLocationSasToken')))]"
-              ]
-            },
-            "protectedSettings": {
-              "commandToExecute": "[concat('bash ', variables('scriptFileName'), ' ', variables('scriptArgs'))]"
-            }
-          }
+      "dependsOn": [
+        "[resourceId('Microsoft.Network/networkInterfaces', variables('nicName'))]",
+        "[resourceId('Microsoft.Storage/storageAccounts', parameters('storageAccountName'))]",
+        "[resourceId('Microsoft.Compute/disks', format('{0}-data', parameters('vmName')))]",
+        "[resourceId('Microsoft.Compute/disks', format('{0}-logs', parameters('vmName')))]"
+      ]
+    },
+    {
+      "type": "Microsoft.Compute/virtualMachines/extensions",
+      "apiVersion": "2020-06-01",
+      "name": "[format('{0}/{1}', parameters('vmName'), 'configScript')]",
+      "location": "[parameters('location')]",
+      "properties": {
+        "publisher": "Microsoft.Azure.Extensions",
+        "type": "CustomScript",
+        "typeHandlerVersion": "2.0",
+        "autoUpgradeMinorVersion": true,
+        "settings": {
+          "fileUris": [
+            "[uri(parameters('_artifactsLocation'), format('scripts/{0}{1}', variables('scriptFileName'), parameters('_artifactsLocationSasToken')))]"
+          ]
+        },
+        "protectedSettings": {
+          "commandToExecute": "[format('bash {0} {1}', variables('scriptFileName'), variables('scriptArgs'))]"
         }
+      },
+      "dependsOn": [
+        "[resourceId('Microsoft.Compute/virtualMachines', parameters('vmName'))]"
       ]
     }
   ],
   "outputs": {
-    "ssh-command": {
+    "ssh_command": {
       "type": "string",
-      "value": "[if(equals(parameters('publicIpNewOrExisting'), 'none'), 'no public ip, vnet access only', concat('ssh ', parameters('adminUsername'), '@', reference(resourceId(parameters('publicIpResourceGroupName'), 'Microsoft.Network/publicIPAddresses', parameters('publicIpName')), '2018-04-01').dnsSettings.fqdn))]"
+      "value": "[if(equals(parameters('publicIpNewOrExisting'), 'none'), 'no public ip, vnet access only', format('ssh {0}@{1}', parameters('adminUsername'), reference(resourceId(parameters('publicIpResourceGroupName'), 'Microsoft.Network/publicIPAddresses', parameters('publicIpName')), '2018-04-01').dnsSettings.fqdn))]"
     }
   }
 }

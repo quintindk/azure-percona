@@ -7,9 +7,6 @@
     },
     "adminPasswordOrKey": {
       "value": "GEN-SSH-PUB-KEY"
-    },
-    "storageNewOrExisting": {
-      "value": "existing"
     }
   }
 }

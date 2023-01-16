@@ -19,7 +19,7 @@ param authenticationType string = 'sshPublicKey'
 param adminPasswordOrKey string
 
 @description('Size for the Virtual Machine.')
-param vmSize string = 'Standard_A2_v2'
+param vmSize string = 'Standard_B2ms'
 
 @description('Determines whether or not a new storage account should be provisioned.')
 @allowed([
@@ -79,16 +79,22 @@ param publicIpDns string = 'linux-vm-${uniqueString(resourceGroup().id)}'
 param publicIpResourceGroupName string = resourceGroup().name
 
 @description('The size of the data disk to attach to the VM')
-param dataDiskSize int = 100
+param dataDiskSize int = 513
 
 @description('The tier of the data disk to attach to the VM')
-param dataDiskTier string = 'P60'
+param dataDiskTier string = 'P30'
+
+@description('The sku of the data disk to attach to the VM')
+param dataDiskSku string = 'Premium_LRS'
+
+@description('The sku of the log disk to attach to the VM')
+param logDiskSku string = 'Premium_LRS'
 
 @description('The size of the data disk to attach to the VM')
-param logsDiskSize int = 100
+param logsDiskSize int = 513
 
 @description('The tier of the data disk to attach to the VM')
-param logsDiskTier string = 'P60'
+param logsDiskTier string = 'P30'
 
 @description('The availability zone to pin this VM and disks to')
 param availabilityZone string = '1'
@@ -244,7 +250,7 @@ resource vmName_data 'Microsoft.Compute/disks@2022-03-02' = {
   name: '${vmName}-data'
   location: location
   sku: {
-    name: 'StandardSSD_LRS'
+    name: dataDiskSku
   }
   properties: {
     burstingEnabled: true
@@ -265,7 +271,7 @@ resource vmName_logs 'Microsoft.Compute/disks@2022-03-02' = {
   name: '${vmName}-logs'
   location: location
   sku: {
-    name: 'StandardSSD_LRS'
+    name: logDiskSku
   }
   properties: {
     burstingEnabled: true
@@ -299,7 +305,7 @@ resource vm 'Microsoft.Compute/virtualMachines@2020-06-01' = {
       imageReference: {
         publisher: 'Canonical'
         offer: 'UbuntuServer'
-        sku: '20.04-LTS'
+        sku: '18_04-lts-gen2'
         version: 'latest'
       }
       dataDisks: [

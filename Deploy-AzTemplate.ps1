@@ -3,24 +3,24 @@
 #Requires -Module Az.Storage
 
 Param(
-  [string] [Parameter(Mandatory = $true)] $ArtifactStagingDirectory,
   [string] [Parameter(Mandatory = $true)][alias("ResourceGroupLocation")] $Location,
-  [string] $ResourceGroupName = (Split-Path $ArtifactStagingDirectory -Leaf),
+  [string] [Parameter(Mandatory = $true)][alias("ResourceGroup")] $ResourceGroupName = 'rg-percona-' + $Location,
+  [string] $ArtifactStagingDirectory = '.',
   [switch] $UploadArtifacts = $false,
   [string] $StorageAccountName,
-  [string] $StorageContainerName = $ResourceGroupName.ToLowerInvariant() + '-stageartifacts',
-  [string] $TemplateFile = $ArtifactStagingDirectory + '\mainTemplate.json',
-  [string] $TemplateParametersFile = $ArtifactStagingDirectory + '\azuredeploy.parameters.json',
-  [string] $DSCSourceFolder = $ArtifactStagingDirectory + '\DSC',
+  [string] $StorageContainerName = $ResourceGroupName.ToLowerInvariant(),
+  [string] $TemplateFile = $ArtifactStagingDirectory + '/mainTemplate.json',
+  [string] $TemplateParametersFile = $ArtifactStagingDirectory + '/azuredeploy.parameters.json',
+  [string] $DSCSourceFolder = $ArtifactStagingDirectory + '/DSC',
   [switch] $BuildDscPackage,
   [switch] $ValidateOnly = $false,
   [string] $DebugOptions = "None",
   [string] $Mode = "Incremental",
   [string] $DeploymentName = ((Split-Path $TemplateFile -LeafBase) + '-' + ((Get-Date).ToUniversalTime()).ToString('MMdd-HHmm')),
   [string] $ManagementGroupId,
-  [switch] $Dev,
-  [switch] $bicep,
-  [switch] $whatIf
+  [switch] $Dev = $false,
+  [switch] $Bicep = $false,
+  [switch] $WhatIf = $false
 )
 
 try {
@@ -49,12 +49,12 @@ $TemplateArgs = New-Object -TypeName Hashtable
 $ArtifactStagingDirectory = ($ArtifactStagingDirectory.TrimEnd('/')).TrimEnd('\')
 
 # if the bicep switch is set, and the templateFile arg was the default, swap .json for .bicep
-$isBicep = ($bicep -or $TemplateFile.EndsWith('.bicep'))
+$isBicep = ($Bicep -or $TemplateFile.EndsWith('.bicep'))
 if ($isBicep) {
-  $defaultTemplateFile = '\main.bicep'
+  $defaultTemplateFile = '/azuredeploy.bicep'
 }
 else {
-  $defaultTemplateFile = '\azuredeploy.json'
+  $defaultTemplateFile = '/azuredeploy.json'
 }
 
 # if the template file isn't found, try another default
@@ -64,7 +64,7 @@ if (!(Test-Path $TemplateFile)) {
 
 # build the bicep file
 if ($isBicep) {
-  bicep build $TemplateFile
+  az bicep build --file $TemplateFile
   # now point the deployment to the json file that was just build
   $TemplateFile = $TemplateFile.Replace('.bicep', '.json')
   $fromBicep = "(from bicep build)"
@@ -179,7 +179,7 @@ if ($UploadArtifacts -Or $useAbsolutePathStaging -or $ArtifactsLocationSasTokenP
 
   # Create a storage account name if none was provided
   if ($StorageAccountName -eq '') {
-    $StorageAccountName = 'stage' + (Get-UniqueString -Id $ResourceGroupName -Length 13)
+    $StorageAccountName = 'depl' + (Get-UniqueString -Id $ResourceGroupName -Length 13)
   }
 
   $StorageAccount = (Get-AzStorageAccount | Where-Object { $_.StorageAccountName -eq $StorageAccountName })

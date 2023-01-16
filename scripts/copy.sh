@@ -20,18 +20,12 @@ while getopts "a:t:p:f:" opt; do
   esac
 done
 
-fileUrl="$artifactsLocation$pathToFile/$fileToInstall$token"
-
 stagingDir="/staging"
 mkdir -p "$stagingDir"
-echo "...................."
-echo "path: $stagingDir/$fileToInstall"
-echo "...................."
-echo "uri: $fileUrl"
-echo "...................."
 
-curl -v -o "$stagingDir/$fileToInstall" "$fileUrl"
-cat "$stagingDir/$fileToInstall"
+getFile "https://aka.ms/downloadazcopy-v10-linux" "$stagingDir/azcopy.tar.gz"
+tar -xvf "$stagingDir/azcopy.tar.gz" -C $stagingDir
+azcopy copy $stagingDir "$artifactsLocation$pathToFile$token" --recursive=true
 
 chmod +x "$stagingDir/$fileToInstall"
-"$stagingDir/$fileToInstall"
+bash -c "$stagingDir/$fileToInstall"

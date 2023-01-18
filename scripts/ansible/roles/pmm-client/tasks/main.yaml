@@ -1,7 +1,7 @@
 - name: Create a pmm client container
   community.docker.docker_container:
-    name: pmm-server
-    image: percona/pmm-client:{{pmm_client_version}}
+    name: pmm-client
+    image: percona/pmm-client:{{ pmm_version }}
     env:
       PMM_AGENT_SERVER_ADDRESS=localhost
       PMM_AGENT_SERVER_USERNAME=admin \
@@ -11,13 +11,13 @@
       PMM_AGENT_CONFIG_FILE=config/pmm-agent.yaml \
     volumes:
       - "/etc/mysql/pmm-agent.yaml.d:/config"
-    ports:
-      - "3306:3306"
     restart_policy: "always"
 
 - name: Create pmm user in MySQL
   community.mysql.mysql_query:
     login_db: mysql
+    login_user: "{{ admin_mysql_user }}"
+    login_password: "{{ admin_mysql_password }}"
     query: |
-      CREATE USER 'pmm'@'localhost' IDENTIFIED BY 'pass' WITH MAX_USER_CONNECTIONS 10;
+      CREATE USER 'pmm'@'localhost' IDENTIFIED BY '{{ pmm_mysql_password }}' WITH MAX_USER_CONNECTIONS 10;
       GRANT SELECT, PROCESS, REPLICATION CLIENT, RELOAD, BACKUP_ADMIN ON *.* TO 'pmm'@'localhost';

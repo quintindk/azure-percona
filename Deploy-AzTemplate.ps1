@@ -224,7 +224,7 @@ if ($UploadArtifacts -Or $useAbsolutePathStaging -or $ArtifactsLocationSasTokenP
   # Generate a 4 hour SAS token for the artifacts location if one was not provided in the parameters file
   # first check to see if we need a sasToken (if it was not already provided in the param file or we're using relativePath)
   if ($useAbsolutePathStaging -or $null -eq $OptionalParameters[$ArtifactsLocationSasTokenName]) {
-    $sasToken = (New-AzStorageContainerSASToken -Container $StorageContainerName -Context $StorageAccount.Context -Permission r -ExpiryTime (Get-Date).AddHours(4))
+    $sasToken = (New-AzStorageContainerSASToken -Container $StorageContainerName -Context $StorageAccount.Context -Permission rl -ExpiryTime (Get-Date).AddHours(4))
   }
 
   # now set the parameter value for the QueryString or _artifactsLocationSasToken as appropriate

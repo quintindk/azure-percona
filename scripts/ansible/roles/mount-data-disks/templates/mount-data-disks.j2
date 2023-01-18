@@ -79,13 +79,12 @@ function create_directory {
 }
 
 function mount_all {
-  names={{mdd_drive_names}}
+  readarray -d " " names <<< {{mdd_drive_names}}
   I=0
-  TOTAL=${#names[@]}
+  TOTAL={{mdd_drive_count}}
   for DEVICE in $(list_devices); do
 
     PARTITION=${DEVICE}1
-    TOTAL=${#names[@]}
     if ((I < TOTAL)); then
       MOUNTPOINT=${names[${I}]}
     else
@@ -101,12 +100,11 @@ function mount_all {
     # Mount disk on mountpoint
     grep -qs $PARTITION /proc/mounts || sudo mount -o noatime ${PARTITION} ${MOUNTPOINT}
 
-    sudo chown -R {{mdd_final_user}}:{{mdd_final_group}} ${MOUNTPOINT}
-
     {% for directory in mdd_subdirectories %}
     create_directory "{{directory}}"
     {% endfor %}
-
+    
+    chown -R {{mdd_final_user}}:{{mdd_final_group}} ${MOUNTPOINT}
     echo ${MOUNTPOINT}
     echo ${MOUNTPOINT} >>"${MOUNTPOINTS_FILE}"
 

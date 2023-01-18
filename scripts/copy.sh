@@ -1,6 +1,6 @@
 #!/bin/bash -e
 
-while getopts "a:t:p:f:" opt; do
+while getopts "a:t:p:f:l:" opt; do
   case $opt in
   a)
     artifactsLocation=$OPTARG #base uri of the file including the container
@@ -23,9 +23,9 @@ done
 stagingDir="/staging"
 mkdir -p "$stagingDir"
 
-getFile "https://aka.ms/downloadazcopy-v10-linux" "$stagingDir/azcopy.tar.gz"
-tar -xvf "$stagingDir/azcopy.tar.gz" -C $stagingDir
-azcopy copy $stagingDir "$artifactsLocation$pathToFile$token" --recursive=true
+wget "https://aka.ms/downloadazcopy-v10-linux" -O "$stagingDir"/azcopy.tar.gz
+tar -xvf "$stagingDir/azcopy.tar.gz" -C "$stagingDir" --strip=1
+"$stagingDir"/azcopy copy "$artifactsLocation$pathToFile$token" "$stagingDir" --recursive=true
 
-chmod +x "$stagingDir/$fileToInstall"
-bash -c "$stagingDir/$fileToInstall"
+chmod +x "$stagingDir/scripts/$fileToInstall"
+#bash -c "$stagingDir/scripts/$fileToInstall"

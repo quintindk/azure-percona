@@ -6,10 +6,11 @@
     - vars/env.yaml
   vars:
     update_apt_cache: yes
+    ansible_python_interpreter: /usr/bin/python3
   roles:
     - docker
     - mount-data-disks
     - percona
+    - mysql-users
     - pmm-server
     - pmm-client
-    - mysql-users

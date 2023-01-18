@@ -4,12 +4,12 @@
     name: pmm-server
     image: percona/pmm-server:{{ pmm_version }}
     volumes:
-      - "/var/lib/pmm:/srv"
+      - /mysql-data/pmm:/srv
     ports:
-      - "443:443"
+      - 443:443
     restart_policy: "always"
 
-- name: Run a simple command (command)
+- name: Run a change-admin-password
   community.docker.docker_container_exec:
     container: pmm-server
     command: change-admin-password {{ pmm_admin_password }}

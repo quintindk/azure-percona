@@ -37,7 +37,7 @@
     enabled: yes
 
 - name: Ensure group "docker" exists
-  ansible.builtin.group:
+  group:
     name: docker
     state: present
 

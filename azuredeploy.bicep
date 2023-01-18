@@ -115,6 +115,12 @@ param publicIpAllocationMethod string = 'Dynamic'
 ])
 param publicIpSku string = 'Basic'
 
+@description('The keyvault details for the Key vault creation or access')
+param keyVaultNewOrExisting string = 'new'
+param keyVaultName string = 'KeyVault${uniqueString(resourceGroup().id)}'
+@secure()
+param keyVaultUserObjectId string
+
 @description('The base URI where artifacts required by this template are located. When the template is deployed using the accompanying scripts, a private location in the subscription will be used and this value will be automatically generated.')
 param _artifactsLocation string = deployment().properties.templateLink.uri
 
@@ -146,7 +152,7 @@ var scriptArgs = '-a ${uri(_artifactsLocation, '.')} -t "${_artifactsLocationSas
 resource storageAccount 'Microsoft.Storage/storageAccounts@2019-06-01' = if (storageNewOrExisting == 'new') {
   name: storageAccountName
   location: location
-  kind: 'Storage'
+  kind: 'StorageV2'
   sku: {
     name: storageAccountType
   }
@@ -370,5 +376,48 @@ resource vmName_configScript 'Microsoft.Compute/virtualMachines/extensions@2020-
     }
   }
 }
+
+resource keyVault 'Microsoft.KeyVault/vaults@2019-09-01' = if (keyVaultNewOrExisting == 'new') {
+  name: keyVaultName
+  location: location
+  properties: {
+    enabledForTemplateDeployment: true
+    tenantId: subscription().tenantId
+    accessPolicies: [
+      {
+        objectId: keyVaultUserObjectId
+        tenantId: subscription().tenantId
+        permissions: {
+          secrets: [
+            'get'
+            'list'
+            'set'
+          ]
+        }
+      }
+    ]
+    sku: {
+      name: 'standard'
+      family: 'A'
+    }
+    networkAcls: {
+      defaultAction: 'Allow'
+      bypass: 'AzureServices'
+    }
+  }
+}
+
+// resource existingKeyVault 'Microsoft.KeyVault/vaults@2019-09-01' existing = {
+//   scope: resourceGroup()
+//   name: keyVaultName
+// }
+
+// resource keyVaultSecret 'Microsoft.KeyVault/vaults/secrets@2019-09-01' = {
+//   parent: existingKeyVault
+//   name: '${vmName}_ssh_key'
+//   properties: {
+//     value: adminPasswordOrKey
+//   }
+// }
 
 output ssh_command string = ((publicIpNewOrExisting == 'none') ? 'no public ip, vnet access only' : 'ssh ${adminUsername}@${reference(resourceId(publicIpResourceGroupName, 'Microsoft.Network/publicIPAddresses', publicIpName), '2018-04-01').dnsSettings.fqdn}')

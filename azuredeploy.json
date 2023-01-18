@@ -5,7 +5,7 @@
     "_generator": {
       "name": "bicep",
       "version": "0.13.1.58284",
-      "templateHash": "3618298760507374113"
+      "templateHash": "8294471366467881299"
     }
   },
   "parameters": {
@@ -239,6 +239,20 @@
         "description": "Name of the resource group for the public ip address"
       }
     },
+    "keyVaultNewOrExisting": {
+      "type": "string",
+      "defaultValue": "new",
+      "metadata": {
+        "description": "The keyvault details for the Key vault creation or access"
+      }
+    },
+    "keyVaultName": {
+      "type": "string",
+      "defaultValue": "[format('KeyVault{0}', uniqueString(resourceGroup().id))]"
+    },
+    "keyVaultUserObjectId": {
+      "type": "secureString"
+    },
     "_artifactsLocation": {
       "type": "string",
       "defaultValue": "[deployment().properties.templateLink.uri]",
@@ -283,7 +297,7 @@
       "apiVersion": "2019-06-01",
       "name": "[parameters('storageAccountName')]",
       "location": "[parameters('location')]",
-      "kind": "Storage",
+      "kind": "StorageV2",
       "sku": {
         "name": "[parameters('storageAccountType')]"
       }
@@ -520,6 +534,38 @@
       "dependsOn": [
         "[resourceId('Microsoft.Compute/virtualMachines', parameters('vmName'))]"
       ]
+    },
+    {
+      "condition": "[equals(parameters('keyVaultNewOrExisting'), 'new')]",
+      "type": "Microsoft.KeyVault/vaults",
+      "apiVersion": "2019-09-01",
+      "name": "[parameters('keyVaultName')]",
+      "location": "[parameters('location')]",
+      "properties": {
+        "enabledForTemplateDeployment": true,
+        "tenantId": "[subscription().tenantId]",
+        "accessPolicies": [
+          {
+            "objectId": "[parameters('keyVaultUserObjectId')]",
+            "tenantId": "[subscription().tenantId]",
+            "permissions": {
+              "secrets": [
+                "get",
+                "list",
+                "set"
+              ]
+            }
+          }
+        ],
+        "sku": {
+          "name": "standard",
+          "family": "A"
+        },
+        "networkAcls": {
+          "defaultAction": "Allow",
+          "bypass": "AzureServices"
+        }
+      }
     }
   ],
   "outputs": {

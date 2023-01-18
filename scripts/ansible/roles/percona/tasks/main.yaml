@@ -1,3 +1,17 @@
+- name: Check config directory
+  stat:
+    path: /etc/mysql/my.cnf.d
+  register: directory_config
+
+- name: Create config directory if it doesn't already exist
+  file:
+    path: /etc/mysql/my.cnf.d
+    state: directory
+    mode: 0755
+    group: "{{ mdd_final_user }}"
+    owner: "{{ mdd_final_group }}"
+  when: not directory_config.stat.exists
+
 - name: Write config
   become: true
   become_user: root
@@ -15,25 +29,54 @@
       # http://dev.mysql.com/doc/mysql/en/server-system-variables.html
 
       [mysqld]
-      datadir                     = {{ data_folder }}
-      log-bin                     = {{ logs_folder }}/mysql-logs.index
-      server_id                   = {{ server_id }}
-      replicate-wild-ignore-table = mysql%.heartbeat%
-      query_cache_size            = 10485760
-      innodb_buffer_pool_size     = {{ (ansible_memtotal_mb * 0.8)*10240000 }}
-      max_connections             = 65535
-      gtid_mode                   = {{ gtid_mode }}
-      enforce_gtid_consistency    = {{ gtid_mode }}
-      default-time-zone           = {{ db_time_zone }}
+      server_id                       = {{ server_id | default(1) }}
+      replicate-wild-ignore-table     = mysql%.heartbeat%
+      query_cache_size                = 10485760
+      innodb_buffer_pool_size         = {{ ((ansible_memtotal_mb * 0.8)*10240000)|int|abs }}
+      max_connections                 = 65535
+      gtid_mode                       = {{ gtid_mode }}
+      enforce_gtid_consistency        = {{ gtid_mode }}
+      default-time-zone               = {{ db_time_zone }}
+      explicit_defaults_for_timestamp
+
+- name: Check data directory
+  stat:
+    path: "{{ data_folder }}"
+  register: directory_data
+
+- name: Create data directory if it doesn't already exist
+  file:
+    path: "{{ data_folder }}"
+    state: directory
+    mode: 0755
+    group: "{{ mdd_final_user }}"
+    owner: "{{ mdd_final_group }}"
+  when: not directory_data.stat.exists
+
+- name: Check logs directory
+  stat:
+    path: "{{ logs_folder }}"
+  register: directory_logs
+
+- name: Create logs directory if it doesn't already exist
+  file:
+    path: "{{ logs_folder }}"
+    state: directory
+    mode: 0755
+    group: "{{ mdd_final_user }}"
+    owner: "{{ mdd_final_group }}"
+  when: not directory_logs.stat.exists
 
 - name: Create a Percona container
   community.docker.docker_container:
     name: percona
-    image: percona:{{ percona_version }}
+    image: percona/percona-server:{{ percona_version }}
+    env:
+      MYSQL_ROOT_PASSWORD={{ admin_mysql_password }}
     volumes:
       - "/etc/mysql/my.cnf.d:/etc/my.cnf.d"
-      - "/mysql-data:/var/lib/mysql"
-      - "/mysql-logs:/var/lib/mysql-logs"
+      - "{{ data_folder }}:/var/lib/mysql"
+      - "{{ logs_folder }}:/var/lib/mysql-logs"
     ports:
       - "3306:3306"
     restart_policy: "always"

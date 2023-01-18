@@ -3,8 +3,8 @@
   community.mysql.mysql_query:
     login_db: mysql
     query: |
-      CREATE USER '{{ percona_dbadmin_user }}'@'%' IDENTIFIED WITH mysql_native_password BY '{{admin_mysql_password}}'
-      GRANT ALL PRIVILEGES ON *.* TO '{{ percona_dbadmin_user }}'@'%' WITH GRANT OPTION
+      CREATE USER '{{ admin_mysql_user }}'@'%' IDENTIFIED WITH mysql_native_password BY '{{ admin_mysql_password }}'
+      GRANT ALL PRIVILEGES ON *.* TO '{{ admin_mysql_user }}'@'%' WITH GRANT OPTION
 
 - name: Flush privileges
   community.mysql.mysql_query:
@@ -15,4 +15,4 @@
 - name: Change the authentication plugin of MySQL root user
   community.mysql.mysql_query:
     login_db: mysql
-    query: ALTER USER 'root'@'localhost' IDENTIFIED WITH mysql_native_password BY '{{admin_mysql_password}}'
+    query: ALTER USER 'root'@'localhost' IDENTIFIED WITH mysql_native_password BY '{{ admin_mysql_password }}'

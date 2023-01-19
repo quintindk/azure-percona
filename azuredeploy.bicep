@@ -144,10 +144,9 @@ var publicIpAddressId = {
   id: resourceId(publicIpResourceGroupName, 'Microsoft.Network/publicIPAddresses', publicIpName)
 }
 var networkSecurityGroupName = 'nsg-ssh'
-var fileToBeCopied = 'install.sh'
 var scriptFolder = 'scripts'
 var scriptFileName = 'copy.sh'
-var scriptArgs = '-a ${uri(_artifactsLocation, '.')} -t "${_artifactsLocationSasToken}" -p ${scriptFolder} -f ${fileToBeCopied}'
+var scriptArgs = '-a ${uri(_artifactsLocation, '.')} -t "${_artifactsLocationSasToken}" -p ${scriptFolder}'
 
 resource storageAccount 'Microsoft.Storage/storageAccounts@2019-06-01' = if (storageNewOrExisting == 'new') {
   name: storageAccountName

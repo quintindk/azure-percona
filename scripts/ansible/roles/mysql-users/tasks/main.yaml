@@ -1,18 +1,9 @@
 ## Create users 
 - name: Create pmm user in MySQL
-  community.mysql.mysql_query:
-    login_db: mysql
-    query: |
-      CREATE USER '{{ admin_mysql_user }}'@'%' IDENTIFIED WITH mysql_native_password BY '{{ admin_mysql_password }}'
-      GRANT ALL PRIVILEGES ON *.* TO '{{ admin_mysql_user }}'@'%' WITH GRANT OPTION
-
-- name: Flush privileges
-  community.mysql.mysql_query:
-    login_db: mysql
-    query: FLUSH PRIVILEGES
-
-## change root to accept password and secure 
-- name: Change the authentication plugin of MySQL root user
-  community.mysql.mysql_query:
-    login_db: mysql
-    query: ALTER USER 'root'@'localhost' IDENTIFIED WITH mysql_native_password BY '{{ admin_mysql_password }}'
+  community.mysql.mysql_user:
+    login_user: root
+    login_password: "{{ admin_mysql_password }}"
+    name: "{{ admin_mysql_user }}"
+    password: "{{ admin_mysql_password }}"
+    priv: '*.*:ALL'
+    state: present

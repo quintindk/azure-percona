@@ -14,10 +14,10 @@
     restart_policy: "always"
 
 - name: Create pmm user in MySQL
-  community.mysql.mysql_query:
-    login_db: mysql
-    login_user: "{{ admin_mysql_user }}"
+  community.mysql.mysql_user:
+    login_user: root
     login_password: "{{ admin_mysql_password }}"
-    query: |
-      CREATE USER 'pmm'@'localhost' IDENTIFIED BY '{{ pmm_mysql_password }}' WITH MAX_USER_CONNECTIONS 10;
-      GRANT SELECT, PROCESS, REPLICATION CLIENT, RELOAD, BACKUP_ADMIN ON *.* TO 'pmm'@'localhost';
+    name: pmm
+    password: "{{ pmm_mysql_password }}"
+    priv: '*.*:ALL'
+    state: present

@@ -1,0 +1,31 @@
+- name: Get apt key
+  get_url:
+    url: https://packages.microsoft.com/keys/microsoft.asc
+    dest: ./microsoft.asc
+
+- name: Create gpg
+  shell: "gpg --dearmor < ./microsoft.asc | sudo tee /etc/apt/trusted.gpg.d/microsoft.gpg > /dev/null"
+
+- name: Add apt source
+  apt_repository:
+    repo: "deb [arch=amd64] https://packages.microsoft.com/repos/azure-cli/ {{ ansible_distribution_release }} main"
+    state: present
+
+- name: Install az cli
+  apt:
+    name: azure-cli
+    update_cache: yes
+    state: present
+
+- name: Install azcopy
+  become: true
+  become_user: root  
+  unarchive:
+    remote_src: true
+    mode: 0755
+    src: https://aka.ms/downloadazcopy-v10-linux
+    dest: /usr/local/bin
+    exclude:
+      - NOTICE.txt
+    extra_opts: [--strip-components=1]
+

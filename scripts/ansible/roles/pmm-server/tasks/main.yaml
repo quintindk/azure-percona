@@ -26,3 +26,9 @@
     container: pmm-server
     command: change-admin-password {{ pmm_admin_password }}
   register: result
+
+- name: Make sure the grafana database is rw
+  file:
+    path: "{{ pmm_folder }}/grafana/grafana.db"
+    state: file
+    mode: 0666

@@ -217,7 +217,7 @@ if ($UploadArtifacts -Or $useAbsolutePathStaging -or $ArtifactsLocationSasTokenP
     if ($SourcePath -like "$DSCSourceFolder*" -and $SourcePath -like "*.zip" -or !($SourcePath -like "$DSCSourceFolder*")) {
       #When using DSC, just copy the DSC archive, not all the modules and source files
       $blobName = ($SourcePath -ireplace [regex]::Escape($ArtifactStagingDirectory), "").TrimStart("/").TrimStart("\")
-      Set-AzStorageBlobContent -File $SourcePath -Blob $blobName -Container $StorageContainerName -Context $StorageAccount.Context -Force
+      Set-AzStorageBlobContent -File $SourcePath -Blob $blobName -Container $StorageContainerName -Context $StorageAccount.Context -Force -ErrorAction SilentlyContinue | Out-Null
     }
   }
 
@@ -248,8 +248,6 @@ if (Test-Path $TemplateParametersFile) {
   Set-Content -Path $TempParametersFile -Value $TemplateParameters
   $TemplateArgs.Add('TemplateParameterFile', $TempParametersFile)
 }
-Write-Host ($TemplateArgs | Out-String)
-Write-Host ($OptionalParameters | Out-String)
 
 if ($ValidateOnly) {
     

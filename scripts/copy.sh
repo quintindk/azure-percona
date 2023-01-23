@@ -26,4 +26,4 @@ tar -xvf "$stagingDir/azcopy.tar.gz" -C "$stagingDir" --strip=1
 
 chmod +x "$stagingDir/scripts/install.sh"
 chmod +x "$stagingDir/scripts/test.sh"
-#bash -c "$stagingDir/scripts/$fileToInstall"
+bash -c "$stagingDir/scripts/install.sh"

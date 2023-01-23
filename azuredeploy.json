@@ -5,7 +5,7 @@
     "_generator": {
       "name": "bicep",
       "version": "0.13.1.58284",
-      "templateHash": "8294471366467881299"
+      "templateHash": "16072680848237649603"
     }
   },
   "parameters": {
@@ -285,10 +285,9 @@
       "id": "[resourceId(parameters('publicIpResourceGroupName'), 'Microsoft.Network/publicIPAddresses', parameters('publicIpName'))]"
     },
     "networkSecurityGroupName": "nsg-ssh",
-    "fileToBeCopied": "install.sh",
     "scriptFolder": "scripts",
     "scriptFileName": "copy.sh",
-    "scriptArgs": "[format('-a {0} -t \"{1}\" -p {2} -f {3}', uri(parameters('_artifactsLocation'), '.'), parameters('_artifactsLocationSasToken'), variables('scriptFolder'), variables('fileToBeCopied'))]"
+    "scriptArgs": "[format('-a {0} -t \"{1}\" -p {2}', uri(parameters('_artifactsLocation'), '.'), parameters('_artifactsLocationSasToken'), variables('scriptFolder'))]"
   },
   "resources": [
     {

@@ -4,6 +4,16 @@ param location string = resourceGroup().location
 @description('Name for the Virtual Machine.')
 param vmName string = 'linux-vm'
 
+@description('Server ID for the MySQL replication.')
+param serverId int = 1
+
+@description('Username for the MySQL database administrator')
+param dbAdminUsername string = 'dbadmin'
+
+@description('Password for the MySQL database admin and PMM server admin')
+@secure()
+param dbAdminPassword string = ''
+
 @description('User name for the Virtual Machine.')
 param adminUsername string
 
@@ -126,7 +136,7 @@ param _artifactsLocation string = deployment().properties.templateLink.uri
 
 @description('The sasToken required to access _artifactsLocation.  When the template is deployed using the accompanying scripts, a sasToken will be automatically generated.')
 @secure()
-param _artifactsLocationSasToken string = ''
+param _artifactsLocationSasToken string
 
 var nicName = '${vmName}-nic'
 var linuxConfiguration = {
@@ -146,7 +156,7 @@ var publicIpAddressId = {
 var networkSecurityGroupName = 'nsg-ssh'
 var scriptFolder = 'scripts'
 var scriptFileName = 'copy.sh'
-var scriptArgs = '-a ${uri(_artifactsLocation, '.')} -t "${_artifactsLocationSasToken}" -p ${scriptFolder}'
+var scriptArgs = '-a ${uri(_artifactsLocation, '.')} -t "${_artifactsLocationSasToken}" -p ${scriptFolder} -s ${serverId} -u ${dbAdminUsername} -z ${dbAdminPassword}'
 
 resource storageAccount 'Microsoft.Storage/storageAccounts@2019-06-01' = if (storageNewOrExisting == 'new') {
   name: storageAccountName
@@ -214,6 +224,19 @@ resource networkSecurityGroup 'Microsoft.Network/networkSecurityGroups@2020-05-0
           sourceAddressPrefix: '*'
           protocol: 'Tcp'
           destinationPortRange: '443'
+          access: 'Allow'
+          direction: 'Inbound'
+          sourcePortRange: '*'
+          destinationAddressPrefix: '*'
+        }
+      }
+      {
+        name: 'default-allow-mysql'
+        properties: {
+          priority: 1002
+          sourceAddressPrefix: '*'
+          protocol: 'Tcp'
+          destinationPortRange: '3306'
           access: 'Allow'
           direction: 'Inbound'
           sourcePortRange: '*'
@@ -406,17 +429,25 @@ resource keyVault 'Microsoft.KeyVault/vaults@2019-09-01' = if (keyVaultNewOrExis
   }
 }
 
-// resource existingKeyVault 'Microsoft.KeyVault/vaults@2019-09-01' existing = {
-//   scope: resourceGroup()
-//   name: keyVaultName
-// }
+resource existingKeyVault 'Microsoft.KeyVault/vaults@2019-09-01' existing = {
+  scope: resourceGroup()
+  name: keyVaultName
+}
 
-// resource keyVaultSecret 'Microsoft.KeyVault/vaults/secrets@2019-09-01' = {
-//   parent: existingKeyVault
-//   name: '${vmName}_ssh_key'
-//   properties: {
-//     value: adminPasswordOrKey
-//   }
-// }
+resource sshKeyVaultSecret 'Microsoft.KeyVault/vaults/secrets@2019-09-01' = {
+  parent: existingKeyVault
+  name: '${vmName}_ssh_key'
+  properties: {
+    value: adminPasswordOrKey
+  }
+}
+
+resource dbAdminPasswordVaultSecret 'Microsoft.KeyVault/vaults/secrets@2019-09-01' = {
+  parent: existingKeyVault
+  name: '${vmName}_${dbAdminUsername}_password'
+  properties: {
+    value: dbAdminPassword
+  }
+}
 
 output ssh_command string = ((publicIpNewOrExisting == 'none') ? 'no public ip, vnet access only' : 'ssh ${adminUsername}@${reference(resourceId(publicIpResourceGroupName, 'Microsoft.Network/publicIPAddresses', publicIpName), '2018-04-01').dnsSettings.fqdn}')

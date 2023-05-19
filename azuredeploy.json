@@ -5,7 +5,7 @@
     "_generator": {
       "name": "bicep",
       "version": "0.13.1.58284",
-      "templateHash": "16072680848237649603"
+      "templateHash": "1982646505858817107"
     }
   },
   "parameters": {
@@ -21,6 +21,27 @@
       "defaultValue": "linux-vm",
       "metadata": {
         "description": "Name for the Virtual Machine."
+      }
+    },
+    "serverId": {
+      "type": "int",
+      "defaultValue": 1,
+      "metadata": {
+        "description": "Server ID for the MySQL replication."
+      }
+    },
+    "dbAdminUsername": {
+      "type": "string",
+      "defaultValue": "dbadmin",
+      "metadata": {
+        "description": "Username for the MySQL database administrator"
+      }
+    },
+    "dbAdminPassword": {
+      "type": "secureString",
+      "defaultValue": "",
+      "metadata": {
+        "description": "Password for the MySQL database admin and PMM server admin"
       }
     },
     "adminUsername": {
@@ -262,7 +283,6 @@
     },
     "_artifactsLocationSasToken": {
       "type": "secureString",
-      "defaultValue": "",
       "metadata": {
         "description": "The sasToken required to access _artifactsLocation.  When the template is deployed using the accompanying scripts, a sasToken will be automatically generated."
       }
@@ -287,7 +307,7 @@
     "networkSecurityGroupName": "nsg-ssh",
     "scriptFolder": "scripts",
     "scriptFileName": "copy.sh",
-    "scriptArgs": "[format('-a {0} -t \"{1}\" -p {2}', uri(parameters('_artifactsLocation'), '.'), parameters('_artifactsLocationSasToken'), variables('scriptFolder'))]"
+    "scriptArgs": "[format('-a {0} -t \"{1}\" -p {2} -s {3} -u {4} -z {5}', uri(parameters('_artifactsLocation'), '.'), parameters('_artifactsLocationSasToken'), variables('scriptFolder'), parameters('serverId'), parameters('dbAdminUsername'), parameters('dbAdminPassword'))]"
   },
   "resources": [
     {
@@ -364,6 +384,19 @@
               "sourceAddressPrefix": "*",
               "protocol": "Tcp",
               "destinationPortRange": "443",
+              "access": "Allow",
+              "direction": "Inbound",
+              "sourcePortRange": "*",
+              "destinationAddressPrefix": "*"
+            }
+          },
+          {
+            "name": "default-allow-mysql",
+            "properties": {
+              "priority": 1002,
+              "sourceAddressPrefix": "*",
+              "protocol": "Tcp",
+              "destinationPortRange": "3306",
               "access": "Allow",
               "direction": "Inbound",
               "sourcePortRange": "*",
@@ -565,6 +598,28 @@
           "bypass": "AzureServices"
         }
       }
+    },
+    {
+      "type": "Microsoft.KeyVault/vaults/secrets",
+      "apiVersion": "2019-09-01",
+      "name": "[format('{0}/{1}', parameters('keyVaultName'), format('{0}_ssh_key', parameters('vmName')))]",
+      "properties": {
+        "value": "[parameters('adminPasswordOrKey')]"
+      },
+      "dependsOn": [
+        "[resourceId('Microsoft.KeyVault/vaults', concat(parameters('keyVaultName')))]"
+      ]
+    },
+    {
+      "type": "Microsoft.KeyVault/vaults/secrets",
+      "apiVersion": "2019-09-01",
+      "name": "[format('{0}/{1}', parameters('keyVaultName'), format('{0}_{1}_password', parameters('vmName'), parameters('dbAdminUsername')))]",
+      "properties": {
+        "value": "[parameters('dbAdminPassword')]"
+      },
+      "dependsOn": [
+        "[resourceId('Microsoft.KeyVault/vaults', concat(parameters('keyVaultName')))]"
+      ]
     }
   ],
   "outputs": {

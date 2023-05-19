@@ -6,7 +6,6 @@
 # mdd_drive_count: 0
 
 # # Subdirectories to create on every mounted disk
-# mdd_subdirectories: [ ]
 
 # # Owner and group of the mounted disks
 # mdd_final_user: root

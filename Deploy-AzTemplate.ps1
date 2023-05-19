@@ -95,6 +95,7 @@ if (!$ValidateOnly) {
 $TemplateFile = [System.IO.Path]::GetFullPath([System.IO.Path]::Combine($PSScriptRoot, $TemplateFile))
 $TemplateParametersFile = [System.IO.Path]::GetFullPath([System.IO.Path]::Combine($PSScriptRoot, $TemplateParametersFile))
 $RandomSuffix = Get-UniqueString -Id $ResourceGroupName -Length 6
+$RandomPassword = Get-UniqueString -Id $ResourceGroupName -Length 32
 $AdminUser = "admin-$RandomSuffix"
 if (!(Test-Path ~/.ssh/$AdminUser)) {
   ssh-keygen -m PEM -t rsa -b 4096 -C "$AdminUser@myserver" -f ~/.ssh/$AdminUser -N mypassphrase
@@ -103,6 +104,7 @@ $RandomPubkey = Get-Content ~/.ssh/$AdminUser.pub -Raw
 $TemplateParameters = Get-Content $TemplateParametersFile -Raw
 $TemplateParameters = $($TemplateParameters -replace "GEN-UNIQUE", "$AdminUser")
 $TemplateParameters = $($TemplateParameters -replace "GEN-SSH-PUB-KEY","$RandomPubkey")
+$TemplateParameters = $($TemplateParameters -replace "GEN-PASSWORD","$RandomPassword")
 $TemplateJSON = Get-Content $TemplateFile -Raw | ConvertFrom-Json
 
 $TemplateSchema = $TemplateJson | Select-Object -expand '$schema' -ErrorAction Ignore

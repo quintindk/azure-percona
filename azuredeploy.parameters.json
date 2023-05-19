@@ -10,6 +10,9 @@
     },
     "keyVaultUserObjectId": {
       "value": "faab65bd-5729-40a5-9602-1dd1d967560c"
+    },
+    "dbAdminPassword" : {
+      "value": "GEN-PASSWORD"
     }
   }
 }

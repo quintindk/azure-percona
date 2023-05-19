@@ -1,5 +1,5 @@
 ## Create users 
-- name: Create pmm user in MySQL
+- name: Create admin in MySQL
   community.mysql.mysql_user:
     login_user: root
     login_password: "{{ admin_mysql_password }}"
